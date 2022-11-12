@@ -40,14 +40,15 @@ class InrixHack:
         resp = r.json()
         pprint.pprint(resp)
 
-    def get_seg_speed(self):
+    def get_drivetime_poly(self):
         payload = {
-            'box': '37.757386|-122.490667,37.746138|-122.395481',
-            'RoadSegmentType': 'TMC'
+            'center': '',
+            'rangeType': '',
+            'duration': 10
         }
 
         r = requests.get(
-            self.domain + 'v1/segments/speed',
+            self.domain + 'drivetimePolygons',
             auth=BearerAuth(self.auth_tkn),
             params=payload
         )
