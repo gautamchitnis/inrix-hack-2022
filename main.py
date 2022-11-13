@@ -63,26 +63,32 @@ class InrixHack:
         payload = {
             'center': str(coords[0]) + '|' + str(coords[1]),
             'rangeType': 'A',
-            'duration': dur
+            'duration': dur,
+            'dateTime': '2022-11-09T16:00:00Z'
         }
 
         r = requests.get(
             self.domain + 'drivetimePolygons',
             auth=BearerAuth(self.auth_tkn),
             params=payload,
-            timeout=1
+            timeout=3
         )
 
-        root = ET.fromstring(r.text)
-        for drive_time in root[0][0]:
-            pos_list = drive_time[0][0][0].text.split()
-            pos_list = list(map(float, pos_list))
+        try:
+            root = ET.fromstring(r.text)
+            for drive_time in root[0][0]:
+                pos_list = drive_time[0][0][0].text.split()
+                pos_list = list(map(float, pos_list))
 
-            pos_list2 = []
-            for i in range(0, len(pos_list), 2):
-                pos_list2.append([pos_list[i], pos_list[i+1]])
+                pos_list2 = []
+                for i in range(0, len(pos_list), 2):
+                    pos_list2.append([pos_list[i], pos_list[i+1]])
 
-            self.drivable_pts.append(pos_list2)
+                self.drivable_pts.append(pos_list2)
+        except:
+            print(r.text)
+            return False
+        return True
 
     def find_suitable_locations(self):
         for idx1, location1_list in enumerate(self.drivable_pts):
@@ -131,8 +137,11 @@ def get_locations():
         ih.loc_flags = [0] * len(loc)
         avg_time = int(math.floor(time/len(loc)))
 
-        for item in loc:
-            ih.get_drivetime_poly(item, avg_time)
+        for idx, item in enumerate(loc):
+            status = ih.get_drivetime_poly(item, avg_time)
+            if not status:
+                del loc[idx]
+                del ih.loc_flags[idx]
 
         ih.find_suitable_locations()
 
