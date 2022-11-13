@@ -1,0 +1,169 @@
+
+@import url(https://fonts.googleapis.com/css?family=Alegreya+Sans:300,400,700);
+* {
+	margin: 0;
+	padding: 0;
+	font-family: 'Alegreya Sans', Arial, sans-serif;
+	text-transform: uppercase;
+}
+html {
+	font-size: 62.5%;
+}
+body {
+	color: black;
+	letter-spacing: .18em;
+}
+.firstSection{
+    color: #1c1c1c !important;
+    font-size: 35px;
+    background:	#fffee0 !important;
+}
+a {
+	text-decoration: none;
+	color: white;
+}
+ul, li {
+	list-style-type: none;
+}
+.clearfix:before,
+.clearfix:after {
+  content: "";
+  display: table;
+}
+.clearfix:after {
+  clear: both;
+}
+.l-left {
+	float: left;
+}
+.l-left img{
+    padding-top: 10px;
+    padding-left:25%
+}
+.header-top {
+	background: 	#fffee0 !important;
+	height: 70px;
+	padding: 0 10px;
+	position: fixed;
+	top: 0;
+	width: 100%;
+	z-index: 12;
+	box-sizing: border-box;
+}
+h1 {
+	line-height: 70px;
+	height: 70px;
+}
+h1 a {
+	display: block;
+	padding: 0 10px;
+}
+.toggle-menu {
+	width: 50px;
+	height: 50px;
+	display: inline-block;
+	position: relative;
+	top: 10px;
+}
+nav {
+ 	height: 0;
+	opacity: 0;
+  box-sizing: border-box;
+  
+	position: fixed;
+	top: 70px;
+	width: 100%;
+  transition: all 1s;
+}
+nav ul {
+	padding: 0 10px;
+	display: flex;
+}
+nav li {
+	flex: 1;
+}
+nav li a {
+	font-size: 2em;
+	display: block;
+	padding: 30px;
+	text-align: center;
+	transition: background .3s;
+}
+nav li a {
+	background: #ff4b4b;
+	margin-left: 20px;
+}
+section { 
+	text-align: center;
+}
+h2 {
+	font-size: 4em;
+	margin-bottom: 20px;
+}
+h3 {
+	font-weight: 300;
+	font-size: 2.8em;
+}
+#fp-nav ul li a span, 
+.fp-slidesNav ul li a span {
+	background: white;
+	width: 8px;
+	height: 8px;
+	margin: -4px 0 0 -4px;
+}
+#fp-nav ul li a.active span, 
+.fp-slidesNav ul li a.active span, 
+#fp-nav ul li:hover a.active span, 
+.fp-slidesNav ul li:hover a.active span {
+	width: 16px;
+	height: 16px;
+	margin: -8px 0 0 -8px;
+	background: transparent;
+	box-sizing: border-box;
+	border: 2px solid #212121;
+}
+.flex-container {
+    display: flex;
+}
+
+.flex-child {
+    flex: 1;
+    padding-top:10px !important;
+}  
+
+.flex-child:first-child {
+    margin-right: 20px;
+    
+}
+
+/* @media screen and (max-width: 767px) {
+	nav ul {
+		flex-direction: column;
+	}
+
+	nav li {
+		margin-top: 1px;
+	}
+  
+  nav li a {
+    font-size: 1.5em;
+  }
+  
+  .scroll-icon {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 400px) {
+  html {
+    font-size: 50%;
+  }
+  
+  .open-menu ~ nav {
+		padding: 20px 0;
+	}
+
+	nav li a {
+		padding: 3px;
+	}
+} */
