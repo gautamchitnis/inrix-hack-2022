@@ -86,7 +86,7 @@ class InrixHack:
 
                 self.drivable_pts.append(pos_list2)
         except:
-            print(r.text)
+            # print(r.text)
             return False
         return True
 
