@@ -1,5 +1,28 @@
+import json
+import math
+from math import cos, asin, sqrt, pi
 import requests
-import pprint
+import xml.etree.ElementTree as ET
+from flask import Flask, request, jsonify, make_response
+
+
+def distance(lat1, lon1, lat2, lon2):
+    p = pi/180
+    a = 0.5 - cos((lat2-lat1)*p)/2 + cos(lat1*p) * cos(lat2*p) * (1-cos((lon2-lon1)*p))/2
+    return 12742 * asin(sqrt(a))
+
+
+def _build_cors_preflight_response():
+    response = make_response()
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add('Access-Control-Allow-Headers', "*")
+    response.headers.add('Access-Control-Allow-Methods', "*")
+    return response
+
+
+def _corsify_actual_response(response):
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    return response
 
 
 class BearerAuth(requests.auth.AuthBase):
@@ -13,7 +36,17 @@ class BearerAuth(requests.auth.AuthBase):
 
 class InrixHack:
     domain = 'https://api.iq.inrix.com/'
-    auth_tkn = None
+
+    def __init__(self):
+        self.auth_tkn = None
+        self.drivable_pts = []
+        self.loc_flags = None
+        self.charger_loc = []
+
+    def get_vendor_data(self):
+        f = open('data.json')
+        data = json.load(f)
+        return data['data']
 
     def gen_token(self):
         payload = {
@@ -26,38 +59,90 @@ class InrixHack:
 
         self.auth_tkn = resp['result']['token']
 
-    def get_seg_speed(self):
+    def get_drivetime_poly(self, coords, dur):
         payload = {
-            'box': '37.757386|-122.490667,37.746138|-122.395481',
-            'RoadSegmentType': 'TMC'
-        }
-
-        r = requests.get(
-            self.domain + 'v1/segments/speed',
-            auth=BearerAuth(self.auth_tkn),
-            params=payload
-        )
-        resp = r.json()
-        pprint.pprint(resp)
-
-    def get_drivetime_poly(self):
-        payload = {
-            'center': '',
-            'rangeType': '',
-            'duration': 10
+            'center': str(coords[0]) + '|' + str(coords[1]),
+            'rangeType': 'A',
+            'duration': dur
         }
 
         r = requests.get(
             self.domain + 'drivetimePolygons',
             auth=BearerAuth(self.auth_tkn),
-            params=payload
+            params=payload,
+            timeout=1
         )
-        resp = r.json()
-        pprint.pprint(resp)
+
+        root = ET.fromstring(r.text)
+        for drive_time in root[0][0]:
+            pos_list = drive_time[0][0][0].text.split()
+            pos_list = list(map(float, pos_list))
+
+            pos_list2 = []
+            for i in range(0, len(pos_list), 2):
+                pos_list2.append([pos_list[i], pos_list[i+1]])
+
+            self.drivable_pts.append(pos_list2)
+
+    def find_suitable_locations(self):
+        for idx1, location1_list in enumerate(self.drivable_pts):
+            if self.loc_flags[idx1] != 1:
+                for idx2, location2_list in enumerate(self.drivable_pts):
+                    if idx1 == idx2 or self.loc_flags[idx2] == 1:
+                        continue
+                    else:
+                        for loc1 in location1_list:
+                            flag1 = True
+                            for loc2 in location2_list:
+                                dist = distance(
+                                    loc1[0], loc1[1],
+                                    loc2[0], loc2[1]
+                                )
+                                if dist <= 0.5:
+                                    self.charger_loc.append([idx1, idx2, loc1])
+                                    self.loc_flags[idx1] = self.loc_flags[idx2] = 1
+                                    flag1 = False
+                                    break
+
+                            if not flag1:
+                                break
 
 
-if __name__ == "__main__":
-    ih = InrixHack()
-    ih.gen_token()
-    ih.get_seg_speed()
-    # print(ih.auth_tkn)
+app = Flask(__name__)
+
+
+@app.route("/app/get/locations", methods=["POST", "OPTIONS"])
+def get_locations():
+    if request.method == "OPTIONS":
+        return _build_cors_preflight_response()
+    elif request.method == "POST":
+        loc = []
+        time = 0
+
+        ih = InrixHack()
+        ih.gen_token()
+
+        data = ih.get_vendor_data()
+        for item in data:
+            if 5 <= item['time'] <= 60:
+                loc.append(item['dst'])
+                time += item['time']
+
+        ih.loc_flags = [0] * len(loc)
+        avg_time = int(math.floor(time/len(loc)))
+
+        for item in loc:
+            ih.get_drivetime_poly(item, avg_time)
+
+        ih.find_suitable_locations()
+
+        charger_loc = []
+        for item in ih.charger_loc:
+            charger_loc.append(item[2])
+
+        del ih
+
+        return _corsify_actual_response(jsonify({
+            "hubs": loc,
+            "locations": charger_loc
+        }))
